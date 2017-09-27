@@ -1,0 +1,3 @@
+[submodule "Agora-common"]
+	path = Agora-common
+	url = https://notabug.org/beartek/Agora-common.git
