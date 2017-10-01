@@ -1,16 +1,16 @@
 //Under GNU AGPL v3, see LICENCE
 
-package beartek.agora.server;
+package beartek.agora.server.handlers;
 
 import beartek.agora.types.Protocol_types;
 
-class Token_handler {
+class Token {
   var clients_tokens : Array<haxe.io.Bytes> = new Array();
 
   public function new() {
     Main.connection.register_join_handler(this.on_new_client);
     Main.connection.register_left_handler(this.on_client_left);
-    Main.connection.register_get_handler( Protocol_types.token, this.on_token_request );
+    Main.connection.register_get_handler('token', this.on_token_request);
   }
 
   public function generate_token() : haxe.io.Bytes {
@@ -20,6 +20,9 @@ class Token_handler {
       token.fill(i, 1, Math.round(Math.random()));
     }
 
+    if( clients_tokens.indexOf(token) != -1 ) {
+      token = generate_token();
+    }
     return token;
   }
 

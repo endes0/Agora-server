@@ -1,6 +1,7 @@
 #integrate files to classpath
 -cp src
 -cp Agora-common/src
+-cp db/src
 
 #this class wil be used as entry point for your app.
 -main beartek.agora.server.Main

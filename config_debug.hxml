@@ -1,6 +1,7 @@
 #integrate files to classpath
 -cp src
 -cp Agora-common/src
+-cp db/src
 
 #haxe libraries for your app.
 dependencies.hxml
@@ -13,4 +14,4 @@ Agora-common/dependencies.hxml
 #"-dce no" : do not remove unused code
 #"-dce std" : remove unused code in the std lib (default)
 #"-dce full" : remove all unused code
--dce full
+-dce std

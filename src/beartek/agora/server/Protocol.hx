@@ -11,9 +11,9 @@ import beartek.agora.types.Tsentence;
 
 
 class Protocol extends Wtps {
-  var get_handlers : Map<Protocol_types,Array<Int -> String -> Dynamic -> Void>> = new Map();
-  var create_handlers : Map<Protocol_types,Array<Int -> String -> Dynamic -> Void>> = new Map();
-  var remove_handlers : Map<Protocol_types,Array<Int -> String -> Dynamic -> Void>> = new Map();
+  var get_handlers : Map<String,Array<Int -> String -> Dynamic -> Void>> = new Map();
+  var create_handlers : Map<String,Array<Int -> String -> Dynamic -> Void>> = new Map();
+  var remove_handlers : Map<String,Array<Int -> String -> Dynamic -> Void>> = new Map();
 
   var join_handlers : Array<Int -> Void> = new Array();
   var left_handlers : Array<Int -> Void> = new Array();
@@ -43,53 +43,38 @@ class Protocol extends Wtps {
   }
 
   private function process_get(client_id : Int, pet_id : String, type : String, data: Dynamic) : Void {
-    if( Reflect.hasField(Protocol_types, type) ) {
-      var type : Protocol_types = Reflect.getProperty(Protocol_types, type);
-      if( get_handlers[type] != null ) {
-        for( func in get_handlers[type] ) {
-          func(client_id, pet_id, data);
-        }
+    if( get_handlers[type] != null ) {
+      for( func in get_handlers[type] ) {
+        func(client_id, pet_id, data);
       }
-    } else {
-      throw 'Get method ' + type + ' not found (client has new protocol version?)';
     }
   }
 
   private function process_create(client_id : Int, pet_id : String, type : String, data: Dynamic) : Void {
-    if( Reflect.hasField(Protocol_types, type) ) {
-      var type : Protocol_types = Reflect.getProperty(Protocol_types, type);
-      if( create_handlers[type] != null ) {
-        for( func in get_handlers[type] ) {
-          func(client_id, pet_id, data);
-        }
+    if( create_handlers[type] != null ) {
+      for( func in get_handlers[type] ) {
+        func(client_id, pet_id, data);
       }
-    } else {
-      throw 'Create method ' + type + ' not found (client has new protocol version?)';
     }
   }
 
   private function process_remove(client_id : Int, pet_id : String, type : String, data: Dynamic) : Void {
-    if( Reflect.hasField(Protocol_types, type) ) {
-      var type : Protocol_types = Reflect.getProperty(Protocol_types, type);
-      if( remove_handlers[type] != null ) {
-        for( func in get_handlers[type] ) {
-          func(client_id, pet_id, data);
-        }
+    if( remove_handlers[type] != null ) {
+      for( func in get_handlers[type] ) {
+        func(client_id, pet_id, data);
       }
-    } else {
-      throw 'Remove method ' + type + ' not found (client has new protocol version?)';
     }
   }
 
-  public inline function register_get_handler( for_type : Protocol_types, func: Int -> String -> Dynamic -> Void ) : Void {
+  public inline function register_get_handler( for_type : String, func: Int -> String -> Dynamic -> Void ) : Void {
     if(get_handlers[for_type] != null) get_handlers[for_type].push(func) else get_handlers[for_type] = [func];
   }
 
-  public inline function register_create_handler( for_type : Protocol_types, func: Int -> String -> Dynamic -> Void ) : Void {
+  public inline function register_create_handler( for_type : String, func: Int -> String -> Dynamic -> Void ) : Void {
     if(create_handlers[for_type] != null) create_handlers[for_type].push(func) else create_handlers[for_type] = [func];
   }
 
-  public inline function register_remove_handler( for_type : Protocol_types, func: Int -> String -> Dynamic -> Void ) : Void {
+  public inline function register_remove_handler( for_type : String, func: Int -> String -> Dynamic -> Void ) : Void {
     if(remove_handlers[for_type] != null) remove_handlers[for_type].push(func) else remove_handlers[for_type] = [func];
   }
 
