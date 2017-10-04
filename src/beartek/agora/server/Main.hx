@@ -28,11 +28,15 @@ class Main {
     }
   }
 
-  static function main() {
+  public static function start() : Void {
     connection = new Protocol('127.0.0.1', 8080, 100, true);
     db = new models.Orm(new orm.Db('sqlite://agora.db'));
 
     handlers = {token: new Token(), sessions: new Sessions()};
+  }
+
+  static function main() {
+    Main.start();
 
     new Main();
   }

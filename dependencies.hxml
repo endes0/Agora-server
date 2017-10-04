@@ -1,3 +1,4 @@
 -lib haxe-ws
 -lib orm
 -lib siphash
+-lib haxe-threadpool:git:https://github.com/thomasuster/haxe-threadpool.git#master

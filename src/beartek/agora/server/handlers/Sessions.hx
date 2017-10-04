@@ -16,6 +16,8 @@ class Sessions {
   public function new() {
     Main.connection.register_left_handler(this.on_client_left);
     Main.connection.register_get_handler('auth', this.on_auth_request);
+    Main.connection.register_create_handler('privkey', this.on_auth_request);
+    Main.connection.register_create_handler('privkey_with_login', this.on_auth_request);
   }
 
   public function new_privkey( id : Int ) : haxe.io.Int32Array {

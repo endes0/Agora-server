@@ -4,7 +4,7 @@
 -cp db/src
 
 #this class wil be used as entry point for your app.
--main beartek.agora.server.Main
+-main beartek.agora.server.Main_cli
 
 #haxe libraries for your app.
 dependencies.hxml
