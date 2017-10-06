@@ -19,7 +19,7 @@ class Main_cli {
     Main.start();
 
     pool.addConcurrent(function( t : Int ) : Void {
-      while( true ) {
+      while( Main.on ) {
         try {
 
           Main.connection.refresh();
@@ -31,13 +31,12 @@ class Main_cli {
     });
 
     pool.addConcurrent(function( t : Int ) : Void {
-      while( true ) {
+      while( Main.on ) {
         this.wait_for_command();
       }
     });
 
     pool.blockRunAll();
-    trace( 'd' );
     pool.end();
   }
 
@@ -45,7 +44,16 @@ class Main_cli {
     var cmd : String = this.readLine();
     if( cmd != '' ) {
       Sys.println("");
-      //TODO: prosesar comando.
+
+      var cmd_args : Array<String> = cmd.split(' ');
+      cmd_args[0].toLowerCase();
+
+      if( Main.handlers.commands.command(cmd_args) ) {
+        Sys.println( 'Command executed sucesfull.' );
+      } else {
+        Sys.println( 'Command not found.' );
+      }
+
       this.print_insert();
     }
   }
