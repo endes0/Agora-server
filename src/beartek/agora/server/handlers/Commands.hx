@@ -55,6 +55,8 @@ class Commands {
 
   private function start_commands() : Void {
     new Core();
+    new Connection();
+    new Db();
 
     started = true;
   }

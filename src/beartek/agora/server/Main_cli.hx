@@ -5,6 +5,7 @@ package beartek.agora.server;
 
 import datetime.DateTime;
 import com.thomasuster.threadpool.ThreadPool;
+import consoleout.ConsoleOut;
 
 class Main_cli {
   var queque_cmd : String = '';
@@ -21,10 +22,9 @@ class Main_cli {
     pool.addConcurrent(function( t : Int ) : Void {
       while( Main.on ) {
         try {
-
           Main.connection.refresh();
         } catch(e:Dynamic) {
-          trace('An error ocurred: ' + e);
+          ConsoleOut.println('An error ocurred: ' + e, Color.Red, DisplayAttribute.Bold);
         }
         Sys.sleep(0.1);
       }
@@ -32,7 +32,12 @@ class Main_cli {
 
     pool.addConcurrent(function( t : Int ) : Void {
       while( Main.on ) {
-        this.wait_for_command();
+        try {
+          this.wait_for_command();
+        } catch(e:Dynamic) {
+          ConsoleOut.println('An error ocurred executing command: ' + e, Color.Red, DisplayAttribute.Bold);
+          this.print_insert();
+        }
       }
     });
 
@@ -49,9 +54,9 @@ class Main_cli {
       cmd_args[0].toLowerCase();
 
       if( Main.handlers.commands.command(cmd_args) ) {
-        Sys.println( 'Command executed sucesfull.' );
+        ConsoleOut.println( 'Command executed sucesfull.', Color.Green );
       } else {
-        Sys.println( 'Command not found.' );
+        ConsoleOut.println( 'Command not found.', Color.Yellow, DisplayAttribute.Reset );
       }
 
       this.print_insert();
@@ -59,12 +64,25 @@ class Main_cli {
   }
 
   public inline function print_insert() : Void {
-    Sys.print('❱ ' + queque_cmd);
+    Sys.print( ConsoleOut.textFormatCodes() + ConsoleOut.textFormatCodes(DisplayAttribute.Blink) + '❱ ' + ConsoleOut.textFormatCodes() + ConsoleOut.textFormatCodes(DisplayAttribute.Faint) + queque_cmd);
   }
 
   public function trace( v:Dynamic, ?infos:haxe.PosInfos ) : Void {
+    var color : Color = Color.White;
+    if( infos.customParams != null ) {
+      color = switch infos.customParams[0] {
+      case 'info': Color.Blue;
+      case 'warn': Color.Yellow;
+      case 'error': Color.Red;
+      case 'sucess': Color.Green;
+      case _: Color.White;
+      }
+    }
+
+
     this.back_to_column(0);
-    Sys.println('[' + DateTime.now().toString() + '][' + infos.className + ':' + infos.methodName + ']:' + Std.string(v));
+    Sys.print(ConsoleOut.textFormatCodes());
+    ConsoleOut.println('[' + DateTime.now().toString() + '][' + infos.className + ':' + infos.methodName + ']:' + Std.string(v), color, DisplayAttribute.Bold );
     this.print_insert();
   }
 
@@ -88,6 +106,13 @@ class Main_cli {
 				if (queque_cmd.length > 0) {
 					queque_cmd = queque_cmd.substring(0, queque_cmd.length - 1);
 					Sys.print(String.fromCharCode(8) + " " + String.fromCharCode(8));
+				}
+			} else if( c == 127 ) {
+        if (queque_cmd.length > 0) {
+					queque_cmd = queque_cmd.substring(0, queque_cmd.length - 1);
+					Sys.print("\033[1D");
+          Sys.print(" ");
+          Sys.print("\033[1D");
 				}
 			} else {
 				queque_cmd += String.fromCharCode(c);

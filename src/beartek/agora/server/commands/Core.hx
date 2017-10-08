@@ -7,6 +7,7 @@ class Core {
 
   public function new() {
     Main.handlers.commands.register_handler('exit', this.exit);
+    Main.handlers.commands.register_handler('help', this.help);
 
   }
 

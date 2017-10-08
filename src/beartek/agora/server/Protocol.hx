@@ -47,22 +47,28 @@ class Protocol extends Wtps {
       for( func in get_handlers[type] ) {
         func(client_id, pet_id, data);
       }
+    } else {
+      trace( 'No handlers to process msg' );
     }
   }
 
   private function process_create(client_id : Int, pet_id : String, type : String, data: Dynamic) : Void {
     if( create_handlers[type] != null ) {
-      for( func in get_handlers[type] ) {
+      for( func in create_handlers[type] ) {
         func(client_id, pet_id, data);
       }
+    } else {
+      trace( 'No handlers to process msg' );
     }
   }
 
   private function process_remove(client_id : Int, pet_id : String, type : String, data: Dynamic) : Void {
     if( remove_handlers[type] != null ) {
-      for( func in get_handlers[type] ) {
+      for( func in remove_handlers[type] ) {
         func(client_id, pet_id, data);
       }
+    } else {
+      trace( 'No handlers to process msg' );
     }
   }
 

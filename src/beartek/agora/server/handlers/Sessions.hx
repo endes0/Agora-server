@@ -16,8 +16,8 @@ class Sessions {
   public function new() {
     Main.connection.register_left_handler(this.on_client_left);
     Main.connection.register_get_handler('auth', this.on_auth_request);
-    Main.connection.register_create_handler('privkey', this.on_auth_request);
-    Main.connection.register_create_handler('privkey_with_login', this.on_auth_request);
+    Main.connection.register_create_handler('privkey', this.on_privkey_request);
+    Main.connection.register_create_handler('privkey_with_login', this.on_privkey_with_loginkey_request);
   }
 
   public function new_privkey( id : Int ) : haxe.io.Int32Array {
@@ -34,6 +34,7 @@ class Sessions {
       table.create(haxe.Serializer.run(privkey), '', login.user_id, DateTime.now().toString());
       return privkey;
     } else {
+      trace( 'Invalid loginkey' );
       return null;
     }
   }
@@ -57,7 +58,7 @@ class Sessions {
       var privkey : haxe.io.Int32Array = haxe.Unserializer.run(auth.privkey);
       if( sh.reset(privkey).fast(token) == session_key ) {
         this.update_last_use(privkey);
-        return new Tid(haxe.Unserializer.run(auth.user_id));
+        return Tid.fromString(auth.user_id);
       }
     }
 
@@ -66,6 +67,21 @@ class Sessions {
 
   private function update_last_use( privkey : haxe.io.Int32Array ) : Void {
     table.where('privkey', '=', haxe.Serializer.run(privkey)).update([ 'last_use' => DateTime.now().toString() ]);
+  }
+
+  public function generate_loginkey( username : String, password : String ) : haxe.Int64 {
+    if( password.length > 59 ) {
+      throw 'password too long.';
+    }
+
+    var sh = new siphash.SipHash();
+
+    var pass : haxe.io.Int32Array = new haxe.io.Int32Array(4);
+    for( pos in 0...password.length ) {
+      var i : Int = Math.floor(pos/15);
+      pass[i] = ((pass[i] << 2) + password.charCodeAt(pos));
+    }
+    return sh.reset(pass).fast(haxe.io.Bytes.ofString(username));
   }
 
   private function generate_privkey() : haxe.io.Int32Array {
