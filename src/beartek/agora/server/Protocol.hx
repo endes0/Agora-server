@@ -127,4 +127,8 @@ class Protocol extends Wtps {
   public inline function send_sentence_removed( removed : Bool = true, client : Int, ?conn : String ) : Void {
     this.send_response(client, 'sentence_removed', removed, conn);
   }
+
+  public inline function send_search_result( result : Search_results, client : Int, ?conn : String ) : Void {
+    this.send_response(client, 'search_result', result, conn);
+  }
 }

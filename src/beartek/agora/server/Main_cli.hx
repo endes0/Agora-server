@@ -23,8 +23,10 @@ class Main_cli {
       while( Main.on ) {
         try {
           Main.connection.refresh();
-        } catch(e:Dynamic) {
+        } catch(e:String) {
           ConsoleOut.println('An error ocurred: ' + e, Color.Red, DisplayAttribute.Bold);
+        } catch(e:Dynamic) {
+          ConsoleOut.println('An unknow error ocurred: ' + Std.string(e), Color.Red, DisplayAttribute.Bold);
         }
         Sys.sleep(0.1);
       }
@@ -48,15 +50,17 @@ class Main_cli {
   public function wait_for_command() : Void {
     var cmd : String = this.readLine();
     if( cmd != '' ) {
+      this.line_up(1);
       Sys.println("");
 
       var cmd_args : Array<String> = cmd.split(' ');
       cmd_args[0].toLowerCase();
 
       if( Main.handlers.commands.command(cmd_args) ) {
-        ConsoleOut.println( 'Command executed sucesfull.', Color.Green );
+        this.back_to_column(0);
+        ConsoleOut.print( 'Command executed sucesfull.', Color.Green );
       } else {
-        ConsoleOut.println( 'Command not found.', Color.Yellow, DisplayAttribute.Reset );
+        ConsoleOut.print( 'Command not found.', Color.Yellow, DisplayAttribute.Reset );
       }
 
       this.print_insert();
@@ -82,7 +86,7 @@ class Main_cli {
 
     this.back_to_column(0);
     Sys.print(ConsoleOut.textFormatCodes());
-    ConsoleOut.println('[' + DateTime.now().toString() + '][' + infos.className + ':' + infos.methodName + ']:' + Std.string(v), color, DisplayAttribute.Bold );
+    ConsoleOut.print('[' + DateTime.now().toString() + '][' + infos.className + ':' + infos.methodName + ']:' + Std.string(v), color, DisplayAttribute.Bold );
     this.print_insert();
   }
 
