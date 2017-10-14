@@ -20,19 +20,19 @@ class Sessions {
     Main.connection.register_create_handler('privkey_with_login', this.on_privkey_with_loginkey_request);
   }
 
-  public function new_privkey( id : Int ) : haxe.io.Int32Array {
+  public function new_privkey( id : Int ) : haxe.io.ArrayBufferView {
     var privkey : haxe.io.Int32Array = this.generate_privkey();
-    table.create(haxe.Serializer.run(privkey), '', sessions[id], DateTime.now().toString());
-    return privkey;
+    table.create(haxe.Serializer.run(privkey.view), '', sessions[id].toString(), DateTime.now().toString());
+    return privkey.view;
   }
 
-  public function new_privkey_with_loginkey( loginkey : haxe.Int64 ) : Null<haxe.io.Int32Array> {
+  public function new_privkey_with_loginkey( loginkey : haxe.Int64 ) : Null<haxe.io.ArrayBufferView> {
     var login : models.Loginkey = login.get(haxe.Serializer.run(loginkey));
 
     if( login != null ) {
       var privkey : haxe.io.Int32Array = this.generate_privkey();
-      table.create(haxe.Serializer.run(privkey), '', login.user_id, DateTime.now().toString());
-      return privkey;
+      table.create(haxe.Serializer.run(privkey.view), '', login.user_id, DateTime.now().toString());
+      return privkey.view;
     } else {
       trace( 'Invalid loginkey' );
       return null;
@@ -62,6 +62,7 @@ class Sessions {
       }
     }
 
+    trace( 'Fail on auth' );
     return null;
   }
 
@@ -87,7 +88,7 @@ class Sessions {
   private function generate_privkey() : haxe.io.Int32Array {
     var privkey : haxe.io.Int32Array = new haxe.io.Int32Array(4);
     for( i in 0...3 ) {
-      var r : Int = Math.round( Math.random()*1000 * (Math.pow(Math.random(), 32) % 10000) );
+      var r : Int = Math.round( (Math.random()*10000 * Math.pow(Math.round(Math.random() * 10), 32)) % 1900000000 );
       privkey[i] = r;
     }
     return privkey;
@@ -102,7 +103,7 @@ class Sessions {
   }
 
   private function on_privkey_with_loginkey_request( id : Int, conn_id : String, loginkey : haxe.Int64 ) : Void {
-    var privkey : haxe.io.Int32Array = this.new_privkey_with_loginkey(loginkey);
+    var privkey : haxe.io.ArrayBufferView = this.new_privkey_with_loginkey(loginkey);
     if( privkey != null ) {
       Main.connection.send_privkey(privkey, id, conn_id);
     } else {

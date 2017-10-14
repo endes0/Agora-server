@@ -11,9 +11,12 @@ typedef Handlers = {
   var token : Token;
   var sessions : Sessions;
   var commands : Commands;
+  var post : Post;
+  var search : Search;
 }
 
 class Main {
+  static public var host : String;
   static public var connection : Protocol;
   static public var db : models.Orm;
   static public var handlers : Handlers;
@@ -32,11 +35,12 @@ class Main {
   }
 
   public static function start() : Void {
-    connection = new Protocol('127.0.0.1', 8080, 100, true);
+    host = '0.0.0.0';
+    connection = new Protocol(host, 8080, 100, true);
     db_conn = new orm.Db('sqlite://agora.db');
     db = new models.Orm(db_conn);
 
-    handlers = {token: new Token(), sessions: new Sessions(), commands: new Commands()};
+    handlers = {token: new Token(), sessions: new Sessions(), commands: new Commands(), post: new Post(), search: new Search()};
   }
 
   public static function off() : Void {

@@ -27,7 +27,7 @@ class Connection {
     case 'auth':
       Main.connection.send_auth(if(cmd[4] == 'false') false else true, client, conn);
     case 'privkey':
-      Main.connection.send_privkey(haxe.io.Int32Array.fromArray([Std.parseInt(cmd[4]), Std.parseInt(cmd[5]), Std.parseInt(cmd[6]), Std.parseInt(cmd[7])]), client, conn);
+      Main.connection.send_privkey(haxe.io.Int32Array.fromArray([Std.parseInt(cmd[4]), Std.parseInt(cmd[5]), Std.parseInt(cmd[6]), Std.parseInt(cmd[7])]).view, client, conn);
     case 'post_removed':
       Main.connection.send_post_removed(if(cmd[4] == 'false') false else true, client, conn);
     case _:

@@ -92,8 +92,8 @@ class Protocol extends Wtps {
     left_handlers.push(func);
   }
 
-  public inline function send_privkey( privkey : haxe.io.Int32Array, client : Int, ?conn : String ) : Void {
-    this.send_response(client, 'privkey', post, conn);
+  public inline function send_privkey( privkey : haxe.io.ArrayBufferView, client : Int, ?conn : String ) : Void {
+    this.send_response(client, 'privkey', privkey.buffer, conn);
   }
 
   public inline function send_token( token : haxe.io.Bytes, client : Int, ?conn : String ) : Void {
