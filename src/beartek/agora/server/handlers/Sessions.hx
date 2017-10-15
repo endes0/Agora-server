@@ -88,7 +88,7 @@ class Sessions {
   private function generate_privkey() : haxe.io.Int32Array {
     var privkey : haxe.io.Int32Array = new haxe.io.Int32Array(4);
     for( i in 0...3 ) {
-      var r : Int = Math.round( (Math.random()*10000 * Math.pow(Math.round(Math.random() * 10), 32)) % 1900000000 );
+      var r : Int = Math.round( (Math.random()*1000 * Math.pow(Math.round(Math.random() * 10), 10)) % 2000000000 );
       privkey[i] = r;
     }
     return privkey;

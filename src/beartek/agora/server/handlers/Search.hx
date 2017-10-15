@@ -17,7 +17,7 @@ class Search {
   public function random_result() : Search_results {
     var posts : Array<Post_info> = [];
 
-    for( post in Main.handlers.post.get_random() ) {
+    for( post in Main.handlers.post.get_random(100) ) {
       posts.push(post.info);
     }
 

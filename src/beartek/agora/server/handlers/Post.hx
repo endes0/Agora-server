@@ -36,27 +36,36 @@ class Post {
 
     var i : Int = 0;
     while( i <= n && i < posts.length ) {
-      var post : beartek.agora.types.Post = haxe.Unserializer.run(posts[i].post);
-      post.info.id = Tid.fromString(posts[i].id).get();
-      result.push(post);
+      try {
+        var post : beartek.agora.types.Post = haxe.Unserializer.run(posts[i].post);
+        post.info.id = Tid.fromString(posts[i].id).get();
+        result.push(post);
+      } catch(e:Dynamic) {
+        trace('Error getting post ' + i + ': ' + e, 'error');
+      }
       i++;
     }
 
     return result;
   }
 
-  public function create_post( post : Tpost, author : Tid ) : Void {
+  public function create_post( post : Tpost, author : Tid ) : Tid {
     if(author.get().type.getName() != Items_types.User_item.getName()) throw 'Author is not a valid id';
     if(post.is_draft() == false ) this.edit_post(post, author);
 
-    post.get().info.author = {id: author.get(), username: null, second_name: null, first_name: null, join_date: null, last_login: null};
+    var post_id : Tid = generate_id(author.get());
 
-    posts.create(generate_id(author.get()).toString(), haxe.Serializer.run(post.get()));
+    post.get().info.author = {id: author.get(), username: null, second_name: null, first_name: null, join_date: null, last_login: null};
+    post.get().info.publish_date = datetime.DateTime.now();
+    post.get().info.emoji_votes = new Map();
+
+    posts.create(post_id.toString(), haxe.Serializer.run(post.get()));
     trace( 'Post created' );
+    return post_id;
   }
 
   private function generate_id( author : Id ) : Tid {
-    return new Tid({ host: Main.host, type: Items_types.Post_item, first: author.first, second: generate_char() + generate_char(), third: generate_char() + generate_char()});
+    return new Tid({ host: author.host, type: Items_types.Post_item, first: author.first, second: generate_char() + generate_char(), third: generate_char() + generate_char()});
   }
 
   public inline function generate_char() : String {
@@ -84,7 +93,7 @@ class Post {
     var post : Tpost = new Tpost(post);
     var author : Tid = Main.handlers.sessions.sessions[id];
 
-    this.create_post(post, author);
+    Main.connection.send_post_id(this.create_post(post, author), id, conn_id);
   }
 
   private function on_edit_post( id : Int, conn_id : String, post : beartek.agora.types.Post ) : Void {

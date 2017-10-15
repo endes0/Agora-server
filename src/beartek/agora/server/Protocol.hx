@@ -7,6 +7,7 @@ import beartek.utils.Wtp_types;
 import beartek.agora.types.Protocol_types;
 import beartek.agora.types.Types;
 import beartek.agora.types.Tpost;
+import beartek.agora.types.Tid;
 import beartek.agora.types.Tsentence;
 
 
@@ -45,7 +46,12 @@ class Protocol extends Wtps {
   private function process_get(client_id : Int, pet_id : String, type : String, data: Dynamic) : Void {
     if( get_handlers[type] != null ) {
       for( func in get_handlers[type] ) {
-        func(client_id, pet_id, data);
+        try {
+          func(client_id, pet_id, data);
+        } catch(e:Dynamic) {
+          trace('Error executing get handler for ' + pet_id + ': ' + e, 'error');
+          trace( haxe.CallStack.toString(haxe.CallStack.exceptionStack()), 'error' );
+        }
       }
     } else {
       trace( 'No handlers to process msg' );
@@ -55,7 +61,12 @@ class Protocol extends Wtps {
   private function process_create(client_id : Int, pet_id : String, type : String, data: Dynamic) : Void {
     if( create_handlers[type] != null ) {
       for( func in create_handlers[type] ) {
-        func(client_id, pet_id, data);
+        try {
+          func(client_id, pet_id, data);
+        } catch(e:Dynamic) {
+          trace('Error executing create handler for ' + pet_id + ': ' + e, 'error');
+          trace( haxe.CallStack.toString(haxe.CallStack.exceptionStack()), 'error' );
+        }
       }
     } else {
       trace( 'No handlers to process msg' );
@@ -65,7 +76,12 @@ class Protocol extends Wtps {
   private function process_remove(client_id : Int, pet_id : String, type : String, data: Dynamic) : Void {
     if( remove_handlers[type] != null ) {
       for( func in remove_handlers[type] ) {
-        func(client_id, pet_id, data);
+        try {
+          func(client_id, pet_id, data);
+        } catch(e:Dynamic) {
+          trace('Error executing create handler for ' + pet_id + ': ' + e, 'error');
+          trace( haxe.CallStack.toString(haxe.CallStack.exceptionStack()), 'error' );
+        }
       }
     } else {
       trace( 'No handlers to process msg' );
@@ -110,6 +126,10 @@ class Protocol extends Wtps {
     } else {
       this.send_response(client, 'post', post, conn);
     }
+  }
+
+  public inline function send_post_id( id : Tid, client : Int, ?conn : String ) : Void {
+    this.send_response(client, 'post_id', id, conn);
   }
 
   public inline function send_post_removed( removed : Bool = true, client : Int, ?conn : String ) : Void {
