@@ -32,16 +32,18 @@ class Main_cli {
       }
     });
 
-    pool.addConcurrent(function( t : Int ) : Void {
-      while( Main.on ) {
-        try {
-          this.wait_for_command();
-        } catch(e:Dynamic) {
-          ConsoleOut.println('An error ocurred executing command: ' + e, Color.Red, DisplayAttribute.Bold);
-          this.print_insert();
+    if( Sys.args()[0] != 'daemon' ) {
+      pool.addConcurrent(function( t : Int ) : Void {
+        while( Main.on ) {
+          try {
+            this.wait_for_command();
+          } catch(e:Dynamic) {
+            ConsoleOut.println('An error ocurred executing command: ' + e, Color.Red, DisplayAttribute.Bold);
+            this.print_insert();
+          }
         }
-      }
-    });
+      });
+    }
 
     pool.blockRunAll();
     pool.end();

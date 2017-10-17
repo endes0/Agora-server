@@ -4,7 +4,7 @@ package beartek.agora.server.handlers;
 
 import beartek.agora.types.Types;
 
-class Search {
+@:keep class Search {
 
   public function new() {
     Main.connection.register_get_handler('search', this.on_search);

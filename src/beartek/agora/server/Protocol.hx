@@ -19,8 +19,8 @@ class Protocol extends Wtps {
   var join_handlers : Array<Int -> Void> = new Array();
   var left_handlers : Array<Int -> Void> = new Array();
 
-  public function new(host : String, port: Int = 8080, max: Int = 100, debug : Bool = true) {
-    super(host, port, max, debug);
+  public function new(host : String, port: Int = 8080, max: Int = 100, ?secure_path : {CA: String, Certificate: String}, debug : Bool = true) {
+    super(host, port, max, secure_path, debug);
   }
 
   override public function on_new_client( id : Int ) : Void {

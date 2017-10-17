@@ -17,6 +17,9 @@ Agora-common/dependencies.hxml
 #"-dce no" : do not remove unused code
 #"-dce std" : remove unused code in the std lib (default)
 #"-dce full" : remove all unused code
--dce full
+-dce std
+
+--macro keep('orm.DbDriver_sqlite')
+--macro keep('orm.DbDriver_mysql')
 
 -neko bin/server.n

@@ -7,7 +7,7 @@ import beartek.agora.types.Tid;
 import siphash.SipHash;
 import datetime.DateTime;
 
-class Sessions {
+@:keep class Sessions {
   public var sessions(default,null) : Array<Tid> = new Array();
   var table : models.AuthManager = Main.db.auth;
   var login : models.LoginkeyManager = Main.db.loginkey;

@@ -6,7 +6,7 @@ import beartek.agora.types.Tpost;
 import beartek.agora.types.Tid;
 import beartek.agora.types.Types;
 
-class Post {
+@:keep class Post {
   var posts : models.PostsManager = Main.db.posts;
 
   public function new() {

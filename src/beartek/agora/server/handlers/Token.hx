@@ -4,7 +4,7 @@ package beartek.agora.server.handlers;
 
 import beartek.agora.types.Protocol_types;
 
-class Token {
+@:keep class Token {
   var clients_tokens : Array<haxe.io.Bytes> = new Array();
 
   public function new() {
