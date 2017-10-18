@@ -70,7 +70,8 @@ class Main_cli {
   }
 
   public inline function print_insert() : Void {
-    Sys.print( ConsoleOut.textFormatCodes() + ConsoleOut.textFormatCodes(DisplayAttribute.Blink) + '❱ ' + ConsoleOut.textFormatCodes() + ConsoleOut.textFormatCodes(DisplayAttribute.Faint) + queque_cmd);
+    var insert : String = ConsoleOut.textFormatCodes() + ConsoleOut.textFormatCodes(DisplayAttribute.Blink) + '❱ ' + ConsoleOut.textFormatCodes() + ConsoleOut.textFormatCodes(DisplayAttribute.Faint) + queque_cmd;
+    Sys.print( "\r" + insert + " " + "\r" + insert );
   }
 
   public function trace( v:Dynamic, ?infos:haxe.PosInfos ) : Void {
@@ -88,7 +89,8 @@ class Main_cli {
 
     this.back_to_column(0);
     Sys.print(ConsoleOut.textFormatCodes());
-    ConsoleOut.print('[' + DateTime.now().toString() + '][' + infos.className + ':' + infos.methodName + ']:' + Std.string(v), color, DisplayAttribute.Bold );
+    var str : String = '[' + DateTime.now().toString() + '][' + infos.className + ':' + infos.methodName + ']:' + Std.string(v);
+    ConsoleOut.print("\r" + str + " " + "\r" + str, color, DisplayAttribute.Bold);
     this.print_insert();
   }
 
