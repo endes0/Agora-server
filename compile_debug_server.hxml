@@ -1,0 +1,6 @@
+config_debug.hxml
+
+#this class wil be used as entry point for your app.
+-main beartek.agora.server.Main_cli
+
+-neko bin/server.n

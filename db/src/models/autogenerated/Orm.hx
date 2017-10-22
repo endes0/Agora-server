@@ -7,11 +7,13 @@ class Orm
 	public var auth(default, null) : models.AuthManager;
 	public var loginkey(default, null) : models.LoginkeyManager;
 	public var posts(default, null) : models.PostsManager;
+	public var postsInfo(default, null) : models.PostsInfoManager;
 
 	public function new(db:orm.Db) : Void
 	{
 		this.auth = new models.AuthManager(db, cast this);
 		this.loginkey = new models.LoginkeyManager(db, cast this);
 		this.posts = new models.PostsManager(db, cast this);
+		this.postsInfo = new models.PostsInfoManager(db, cast this);
 	}
 }

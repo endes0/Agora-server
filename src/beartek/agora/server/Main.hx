@@ -28,7 +28,7 @@ class Main {
   static public var db(default,null) : models.Orm;
   static public var handlers(default,null) : Handlers;
   static public var on(default,null) : Bool = true;
-  static var db_conn : orm.Db;
+  static public var db_conn : orm.Db;
   static var config : Ini;
 
   public function new() : Void {

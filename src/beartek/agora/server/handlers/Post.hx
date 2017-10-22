@@ -5,9 +5,11 @@ package beartek.agora.server.handlers;
 import beartek.agora.types.Tpost;
 import beartek.agora.types.Tid;
 import beartek.agora.types.Types;
+import htmlparser.HtmlDocument;
 
 @:keep class Post {
   var posts : models.PostsManager = Main.db.posts;
+  var posts_info : models.PostsInfoManager = Main.db.postsInfo;
 
   public function new() {
     Main.connection.register_create_handler('post', this.on_post);
@@ -18,7 +20,7 @@ import beartek.agora.types.Types;
 
   public function get_post( id : Tid, full : Bool = true ) : beartek.agora.types.Post {
     if( id.get().type.getName() != Items_types.Post_item.getName() ) throw 'Invalid Post id';
-    var post : beartek.agora.types.Post = haxe.Unserializer.run(posts.get(id.toString()).post);
+    var post : beartek.agora.types.Post = this.obtain_post(id);
 
     if( full ) {
       post.info.id = id.get();
@@ -30,18 +32,32 @@ import beartek.agora.types.Types;
     }
   }
 
-  public function get_random( n = 10 ) : Array<beartek.agora.types.Post> {
-    var result : Array<beartek.agora.types.Post> = [];
-    var posts : Array<models.Posts> = posts.getAll();
+  public function get_post_info( id : Tid ) : beartek.agora.types.Post_info {
+    var info = posts_info.get(id.toString());
+    return to_post_info(info);
+  }
+
+  public inline function to_post_info( info : models.PostsInfo ) : beartek.agora.types.Post_info {
+    return {id: Tid.fromString(info.id).get(), title: info.title, subtitle: info.subtitle, overview: info.overview, publish_date: info.publish_date}; //TODO: anadir datos del autor
+  }
+
+  private inline function obtain_post( id : Tid ) : beartek.agora.types.Post {
+    return {info: this.get_post_info(id), content: new HtmlDocument(posts.get(id.toString()).content), tags: []};
+  }
+
+  public function get_random( n = 10 ) : Array<beartek.agora.types.Post_info> {
+    var result : Array<beartek.agora.types.Post_info> = [];
+    var posts : Array<models.PostsInfo> = posts_info.where('id', 'LIKE', '%' + generate_char() + '%').orderAsc('id').findMany(n);
+    if( posts.length < 1 ) {
+      return get_random(n);
+    }
 
     var i : Int = 0;
     while( i <= n && i < posts.length ) {
       try {
-        var post : beartek.agora.types.Post = haxe.Unserializer.run(posts[i].post);
-        post.info.id = Tid.fromString(posts[i].id).get();
-        result.push(post);
+        result.push(to_post_info(posts[i]));
       } catch(e:Dynamic) {
-        trace('Error getting post ' + i + ': ' + e, 'error');
+        trace('Error getting post info ' + i + ': ' + e, 'error');
       }
       i++;
     }
@@ -55,11 +71,7 @@ import beartek.agora.types.Types;
 
     var post_id : Tid = generate_id(author.get());
 
-    post.get().info.author = {id: author.get(), username: null, second_name: null, first_name: null, join_date: null, last_login: null};
-    post.get().info.publish_date = datetime.DateTime.now();
-    post.get().info.emoji_votes = new Map();
-
-    posts.create(post_id.toString(), haxe.Serializer.run(post.get()));
+    save_post(post, author, post_id);
     trace( 'Post created' );
     return post_id;
   }
@@ -78,7 +90,17 @@ import beartek.agora.types.Types;
     if(author.get().type.getName() != Items_types.User_item.getName()) throw 'Author is not a valid id';
     if(Tid.equal(author.get(), post.get().info.author.id)) throw 'Authors are differents';
 
-    posts.get(new Tid(post.get().info.id).toString()).set(haxe.Serializer.run(post.get()));
+    save_edit_post(post, author, new Tid(post.get().info.id));
+  }
+
+  private function save_post( post : Tpost, author_id : Tid, id : Tid ) : Void {
+    posts.create(id.toString(), post.get().content.toString());
+    posts_info.create(id.toString(), post.get().info.title, post.get().info.subtitle, post.get().info.overview, author_id.toString(), datetime.DateTime.now(), null);
+  }
+
+  private function save_edit_post( post : Tpost, author_id : Tid, id : Tid ) : Void {
+    posts.get(id.toString()).set(post.get().content.toString());
+    posts_info.get(id.toString()).set(post.get().info.title, post.get().info.subtitle, post.get().info.overview, author_id.toString(), post.get().info.publish_date, datetime.DateTime.now());
   }
 
   private function on_get_post( id : Int, conn_id : String, post_id : Id ) : Void {

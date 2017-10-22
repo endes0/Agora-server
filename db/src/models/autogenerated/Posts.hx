@@ -7,7 +7,7 @@ class Posts
 	var db : orm.Db;
 	var orm : models.Orm;
 	public var id : String;
-	public var post : String;
+	public var content : String;
 
 	public function new(db:orm.Db, orm:models.Orm) : Void
 	{
@@ -15,16 +15,16 @@ class Posts
 		this.orm = orm;
 	}
 
-	public function set(post:String) : Void
+	public function set(content:String) : Void
 	{
-		this.post = post;
+		this.content = content;
 	}
 
 	public function save() : Void
 	{
 		db.query(
 			 'UPDATE `posts` SET '
-				+  '`post` = ' + db.quote(post)
+				+  '`content` = ' + db.quote(content)
 			+' WHERE `id` = ' + db.quote(id)
 			+' LIMIT 1'
 		);

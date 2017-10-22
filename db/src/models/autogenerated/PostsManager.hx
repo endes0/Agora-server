@@ -19,11 +19,11 @@ class PostsManager
 		this.orm = orm;
 	}
 
-	function newModelFromParams(id:String, post:String) : models.Posts
+	function newModelFromParams(id:String, content:String) : models.Posts
 	{
 		var _obj = new models.Posts(db, orm);
 		_obj.id = id;
-		_obj.post = post;
+		_obj.content = content;
 		return _obj;
 	}
 
@@ -31,7 +31,7 @@ class PostsManager
 	{
 		var _obj = new models.Posts(db, orm);
 		_obj.id = Reflect.field(d, 'id');
-		_obj.post = Reflect.field(d, 'post');
+		_obj.content = Reflect.field(d, 'content');
 		return _obj;
 	}
 
@@ -45,30 +45,30 @@ class PostsManager
 		return getBySqlOne('SELECT * FROM `posts` WHERE `id` = ' + db.quote(id));
 	}
 
-	public function create(id:String, post:String) : models.Posts
+	public function create(id:String, content:String) : models.Posts
 	{
-		db.query('INSERT INTO `posts`(`id`, `post`) VALUES (' + db.quote(id) + ', ' + db.quote(post) + ')');
-		return newModelFromParams(id, post);
+		db.query('INSERT INTO `posts`(`id`, `content`) VALUES (' + db.quote(id) + ', ' + db.quote(content) + ')');
+		return newModelFromParams(id, content);
 	}
 
-	public function createNamed(data:{ id:String, post:String }) : models.Posts
+	public function createNamed(data:{ id:String, content:String }) : models.Posts
 	{
-		db.query('INSERT INTO `posts`(`id`, `post`) VALUES (' + db.quote(data.id) + ', ' + db.quote(data.post) + ')');
-		return newModelFromParams(data.id, data.post);
+		db.query('INSERT INTO `posts`(`id`, `content`) VALUES (' + db.quote(data.id) + ', ' + db.quote(data.content) + ')');
+		return newModelFromParams(data.id, data.content);
 	}
 
-	public function createOptional(data:{ id:String, ?post:String }) : models.Posts
+	public function createOptional(data:{ id:String, ?content:String }) : models.Posts
 	{
 		createOptionalNoReturn(data);
 		return get(data.id);
 	}
 
-	public function createOptionalNoReturn(data:{ id:String, ?post:String }) : Void
+	public function createOptionalNoReturn(data:{ id:String, ?content:String }) : Void
 	{
 		var fields = [];
 		var values = [];
 		fields.push('`id`'); values.push(db.quote(data.id));
-		if (Reflect.hasField(data, 'post')) { fields.push('`post`'); values.push(db.quote(data.post)); }
+		if (Reflect.hasField(data, 'content')) { fields.push('`content`'); values.push(db.quote(data.content)); }
 		db.query('INSERT INTO `posts`(' + fields.join(", ") + ') VALUES (' + values.join(", ") + ')');
 	}
 
