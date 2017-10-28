@@ -7,8 +7,6 @@ import beartek.utils.Wtp_types;
 import beartek.agora.server.handlers.*;
 import beartek.agora.types.Tid;
 import orm.Db;
-import hxIni.IniManager;
-import hxIni.IniManager.Ini;
 
 
 typedef Handlers = {
@@ -29,7 +27,7 @@ class Main {
   static public var handlers(default,null) : Handlers;
   static public var on(default,null) : Bool = true;
   static public var db_conn : orm.Db;
-  static var config : Ini;
+  static public var config : Map<String,Map<String,String>>;
 
   public function new() : Void {
     while( Main.on ) {
@@ -43,21 +41,6 @@ class Main {
   }
 
   public static function start() : Void {
-    if( !sys.FileSystem.exists('agora.ini') ) {
-      sys.io.File.saveContent('agora.ini', ' ');
-    }
-    config = IniManager.loadFromFile("agora.ini");
-
-    if( config['connection'] == null ) config['connection'] = new Map();
-    if( config['db'] == null ) config['db'] = new Map();
-    if( config['secure'] == null ) config['secure'] = new Map();
-
-    if( config['connection']['host'] == null ) config['connection']['host'] = '0.0.0.0';
-    if( config['connection']['port'] == null ) config['connection']['port'] = '8080';
-    if( config['connection']['max_clients'] == null ) config['connection']['max_clients'] = '100';
-    if( config['db']['URI'] == null ) config['db']['URI'] = 'sqlite://agora.db';
-    IniManager.writeToFile(config, "agora.ini");
-
     var secure : {CA: String, Certificate: String} = null;
     if( config['secure']['CA'] != null && config['secure']['certificate'] != null ) {
       var secure : {CA: String, Certificate: String} = {CA: config['secure']['CA'], Certificate: config['secure']['certificate']};
@@ -76,7 +59,6 @@ class Main {
   public static function off() : Void {
     connection.close();
     db_conn.close();
-    IniManager.writeToFile(config, "agora.ini");
     on = false;
   }
 

@@ -32,8 +32,13 @@ import htmlparser.HtmlDocument;
     }
   }
 
-  public function get_post_info( id : Tid ) : beartek.agora.types.Post_info {
+  public function get_post_info( id : Tid, popularity : Bool = false ) : beartek.agora.types.Post_info {
     var info = posts_info.get(id.toString());
+
+    if( popularity ) {
+      this.add_popularity(info, 1);
+    }
+
     return to_post_info(info);
   }
 
@@ -42,7 +47,18 @@ import htmlparser.HtmlDocument;
   }
 
   private inline function obtain_post( id : Tid ) : beartek.agora.types.Post {
-    return {info: this.get_post_info(id), content: new HtmlDocument(posts.get(id.toString()).content), tags: []};
+    return {info: this.get_post_info(id, true), content: new HtmlDocument(posts.get(id.toString()).content), tags: []};
+  }
+
+  public function add_popularity( post : models.PostsInfo, pts : Int ) : Void {
+    if( new datetime.DateTime(post.last_access).getDay() < datetime.DateTime.now().getDay() ) {
+      post.day_popularity = pts;
+    } else {
+      post.day_popularity += pts;
+    }
+    post.total_popularity += pts;
+    post.last_access = datetime.DateTime.now();
+    post.save();
   }
 
   public function get_random( n = 10 ) : Array<beartek.agora.types.Post_info> {
@@ -95,12 +111,23 @@ import htmlparser.HtmlDocument;
 
   private function save_post( post : Tpost, author_id : Tid, id : Tid ) : Void {
     posts.create(id.toString(), post.get().content.toString());
-    posts_info.create(id.toString(), post.get().info.title, post.get().info.subtitle, post.get().info.overview, author_id.toString(), datetime.DateTime.now(), null);
+    posts_info.create(id.toString(), post.get().info.title, post.get().info.subtitle, post.get().info.overview, author_id.toString(), datetime.DateTime.now(), null, 0, 0, datetime.DateTime.now());
   }
 
   private function save_edit_post( post : Tpost, author_id : Tid, id : Tid ) : Void {
-    posts.get(id.toString()).set(post.get().content.toString());
-    posts_info.get(id.toString()).set(post.get().info.title, post.get().info.subtitle, post.get().info.overview, author_id.toString(), post.get().info.publish_date, datetime.DateTime.now());
+    var db_post = posts.get(id.toString());
+    var db_info = posts_info.get(id.toString());
+
+    db_post.set(post.get().content.toString());
+    db_post.save();
+
+    db_info.title = post.get().info.title;
+    db_info.subtitle = post.get().info.subtitle;
+    db_info.overview = post.get().info.overview;
+    db_info.author_id = author_id.toString();
+    db_info.publish_date = post.get().info.publish_date;
+    db_info.edit_date = datetime.DateTime.now();
+    db_info.save();
   }
 
   private function on_get_post( id : Int, conn_id : String, post_id : Id ) : Void {

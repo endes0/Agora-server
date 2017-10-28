@@ -6,6 +6,7 @@ package beartek.agora.server;
 import datetime.DateTime;
 import com.thomasuster.threadpool.ThreadPool;
 import consoleout.ConsoleOut;
+import hxIni.IniManager;
 
 class Main_cli {
   var queque_cmd : String = '';
@@ -17,6 +18,7 @@ class Main_cli {
     haxe.Log.trace = this.trace;
     this.print_insert();
 
+    this.config();
     Main.start();
 
     pool.addConcurrent(function( t : Int ) : Void {
@@ -47,6 +49,24 @@ class Main_cli {
 
     pool.blockRunAll();
     pool.end();
+    IniManager.writeToFile(Main.config, "agora.ini");
+  }
+
+  public function config() : Void {
+    if( !sys.FileSystem.exists('agora.ini') ) {
+      sys.io.File.saveContent('agora.ini', ' ');
+    }
+    Main.config = IniManager.loadFromFile("agora.ini");
+
+    if( Main.config['connection'] == null ) Main.config['connection'] = new Map();
+    if( Main.config['db'] == null ) Main.config['db'] = new Map();
+    if( Main.config['secure'] == null ) Main.config['secure'] = new Map();
+
+    if( Main.config['connection']['host'] == null ) Main.config['connection']['host'] = '0.0.0.0';
+    if( Main.config['connection']['port'] == null ) Main.config['connection']['port'] = '8080';
+    if( Main.config['connection']['max_clients'] == null ) Main.config['connection']['max_clients'] = '100';
+    if( Main.config['db']['URI'] == null ) Main.config['db']['URI'] = 'sqlite://agora.db';
+    IniManager.writeToFile(Main.config, "agora.ini");
   }
 
   public function wait_for_command() : Void {

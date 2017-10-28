@@ -19,7 +19,7 @@ class PostsInfoManager
 		this.orm = orm;
 	}
 
-	function newModelFromParams(id:String, title:String, subtitle:String, overview:String, author_id:String, publish_date:Float, edit_date:Float) : models.PostsInfo
+	function newModelFromParams(id:String, title:String, subtitle:String, overview:String, author_id:String, publish_date:Float, edit_date:Float, day_popularity:Int, total_popularity:Int, last_access:Float) : models.PostsInfo
 	{
 		var _obj = new models.PostsInfo(db, orm);
 		_obj.id = id;
@@ -29,6 +29,9 @@ class PostsInfoManager
 		_obj.author_id = author_id;
 		_obj.publish_date = publish_date;
 		_obj.edit_date = edit_date;
+		_obj.day_popularity = day_popularity;
+		_obj.total_popularity = total_popularity;
+		_obj.last_access = last_access;
 		return _obj;
 	}
 
@@ -42,6 +45,9 @@ class PostsInfoManager
 		_obj.author_id = Reflect.field(d, 'author_id');
 		_obj.publish_date = Reflect.field(d, 'publish_date');
 		_obj.edit_date = Reflect.field(d, 'edit_date');
+		_obj.day_popularity = Reflect.field(d, 'day_popularity');
+		_obj.total_popularity = Reflect.field(d, 'total_popularity');
+		_obj.last_access = Reflect.field(d, 'last_access');
 		return _obj;
 	}
 
@@ -55,25 +61,25 @@ class PostsInfoManager
 		return getBySqlOne('SELECT * FROM `posts_info` WHERE `id` = ' + db.quote(id));
 	}
 
-	public function create(id:String, title:String, subtitle:String, overview:String, author_id:String, publish_date:Float, edit_date:Float) : models.PostsInfo
+	public function create(id:String, title:String, subtitle:String, overview:String, author_id:String, publish_date:Float, edit_date:Float, day_popularity:Int, total_popularity:Int, last_access:Float) : models.PostsInfo
 	{
-		db.query('INSERT INTO `posts_info`(`id`, `title`, `subtitle`, `overview`, `author_id`, `publish_date`, `edit_date`) VALUES (' + db.quote(id) + ', ' + db.quote(title) + ', ' + db.quote(subtitle) + ', ' + db.quote(overview) + ', ' + db.quote(author_id) + ', ' + db.quote(publish_date) + ', ' + db.quote(edit_date) + ')');
-		return newModelFromParams(id, title, subtitle, overview, author_id, publish_date, edit_date);
+		db.query('INSERT INTO `posts_info`(`id`, `title`, `subtitle`, `overview`, `author_id`, `publish_date`, `edit_date`, `day_popularity`, `total_popularity`, `last_access`) VALUES (' + db.quote(id) + ', ' + db.quote(title) + ', ' + db.quote(subtitle) + ', ' + db.quote(overview) + ', ' + db.quote(author_id) + ', ' + db.quote(publish_date) + ', ' + db.quote(edit_date) + ', ' + db.quote(day_popularity) + ', ' + db.quote(total_popularity) + ', ' + db.quote(last_access) + ')');
+		return newModelFromParams(id, title, subtitle, overview, author_id, publish_date, edit_date, day_popularity, total_popularity, last_access);
 	}
 
-	public function createNamed(data:{ id:String, title:String, subtitle:String, overview:String, author_id:String, publish_date:Float, edit_date:Float }) : models.PostsInfo
+	public function createNamed(data:{ id:String, title:String, subtitle:String, overview:String, author_id:String, publish_date:Float, edit_date:Float, day_popularity:Int, total_popularity:Int, last_access:Float }) : models.PostsInfo
 	{
-		db.query('INSERT INTO `posts_info`(`id`, `title`, `subtitle`, `overview`, `author_id`, `publish_date`, `edit_date`) VALUES (' + db.quote(data.id) + ', ' + db.quote(data.title) + ', ' + db.quote(data.subtitle) + ', ' + db.quote(data.overview) + ', ' + db.quote(data.author_id) + ', ' + db.quote(data.publish_date) + ', ' + db.quote(data.edit_date) + ')');
-		return newModelFromParams(data.id, data.title, data.subtitle, data.overview, data.author_id, data.publish_date, data.edit_date);
+		db.query('INSERT INTO `posts_info`(`id`, `title`, `subtitle`, `overview`, `author_id`, `publish_date`, `edit_date`, `day_popularity`, `total_popularity`, `last_access`) VALUES (' + db.quote(data.id) + ', ' + db.quote(data.title) + ', ' + db.quote(data.subtitle) + ', ' + db.quote(data.overview) + ', ' + db.quote(data.author_id) + ', ' + db.quote(data.publish_date) + ', ' + db.quote(data.edit_date) + ', ' + db.quote(data.day_popularity) + ', ' + db.quote(data.total_popularity) + ', ' + db.quote(data.last_access) + ')');
+		return newModelFromParams(data.id, data.title, data.subtitle, data.overview, data.author_id, data.publish_date, data.edit_date, data.day_popularity, data.total_popularity, data.last_access);
 	}
 
-	public function createOptional(data:{ id:String, ?title:String, ?subtitle:String, ?overview:String, ?author_id:String, ?publish_date:Float, ?edit_date:Float }) : models.PostsInfo
+	public function createOptional(data:{ id:String, ?title:String, ?subtitle:String, ?overview:String, ?author_id:String, ?publish_date:Float, ?edit_date:Float, ?day_popularity:Int, ?total_popularity:Int, ?last_access:Float }) : models.PostsInfo
 	{
 		createOptionalNoReturn(data);
 		return get(data.id);
 	}
 
-	public function createOptionalNoReturn(data:{ id:String, ?title:String, ?subtitle:String, ?overview:String, ?author_id:String, ?publish_date:Float, ?edit_date:Float }) : Void
+	public function createOptionalNoReturn(data:{ id:String, ?title:String, ?subtitle:String, ?overview:String, ?author_id:String, ?publish_date:Float, ?edit_date:Float, ?day_popularity:Int, ?total_popularity:Int, ?last_access:Float }) : Void
 	{
 		var fields = [];
 		var values = [];
@@ -84,6 +90,9 @@ class PostsInfoManager
 		if (Reflect.hasField(data, 'author_id')) { fields.push('`author_id`'); values.push(db.quote(data.author_id)); }
 		if (Reflect.hasField(data, 'publish_date')) { fields.push('`publish_date`'); values.push(db.quote(data.publish_date)); }
 		if (Reflect.hasField(data, 'edit_date')) { fields.push('`edit_date`'); values.push(db.quote(data.edit_date)); }
+		if (Reflect.hasField(data, 'day_popularity')) { fields.push('`day_popularity`'); values.push(db.quote(data.day_popularity)); }
+		if (Reflect.hasField(data, 'total_popularity')) { fields.push('`total_popularity`'); values.push(db.quote(data.total_popularity)); }
+		if (Reflect.hasField(data, 'last_access')) { fields.push('`last_access`'); values.push(db.quote(data.last_access)); }
 		db.query('INSERT INTO `posts_info`(' + fields.join(", ") + ') VALUES (' + values.join(", ") + ')');
 	}
 

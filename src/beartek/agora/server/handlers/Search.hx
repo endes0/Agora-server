@@ -34,13 +34,22 @@ import beartek.agora.types.Tid;
     }
     //TODO: event, topic, tags
 
-    trace( search.order_by );
     if( search.order_by != null ) {
       switch search.order_by {
       case Recent_date:
-        other += 'ORDER BY publish_date ASC ';
-      case Older_date:
         other += 'ORDER BY publish_date DESC ';
+      case Older_date:
+        other += 'ORDER BY publish_date ASC ';
+      case Most_popular_over_time:
+        other += 'ORDER BY total_popularity DESC ';
+      case Least_popular_over_time:
+        other += 'ORDER BY total_popularity ASC ';
+      case Most_popular:
+        where.push('last_access > ' + datetime.DateTime.now().snap(Day(Down)).getTime());
+        other += 'ORDER BY day_popularity DESC ';
+      case Least_popular:
+        where.push('last_access > ' + datetime.DateTime.now().snap(Day(Down)).getTime());
+        other += 'ORDER BY day_popularity ASC ';
       case _:
         throw 'Not yet implemented';
       }
@@ -54,7 +63,7 @@ import beartek.agora.types.Tid;
       other += 'OFFSET ' + search.offset;
     }
 
-    return posts_info.getBySqlMany('SELECT * FROM posts_info' + if(where.length > 0) ' WHERE ' + where.join(' AND ') else ' ' + other).map(Main.handlers.post.to_post_info);
+    return posts_info.getBySqlMany('SELECT * FROM posts_info' + (if(where.length > 0) ' WHERE ' + where.join(' AND ') else ' ') + ' ' + other).map(Main.handlers.post.to_post_info);
   }
 
   private function on_search( id : Int, conn_id : String, search : beartek.agora.types.Types.Search ) : Void {
