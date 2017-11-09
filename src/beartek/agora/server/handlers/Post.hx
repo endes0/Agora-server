@@ -5,6 +5,7 @@ package beartek.agora.server.handlers;
 import beartek.agora.types.Tpost;
 import beartek.agora.types.Tid;
 import beartek.agora.types.Types;
+import beartek.agora.Utils;
 import htmlparser.HtmlDocument;
 
 @:keep class Post {
@@ -14,17 +15,18 @@ import htmlparser.HtmlDocument;
   public function new() {
     Main.connection.register_create_handler('post', this.on_post);
     Main.connection.register_create_handler('edit_post', this.on_edit_post);
-    Main.connection.register_get_handler('post', this.on_get_post);
-    Main.connection.register_get_handler('full_post', this.on_get_full_post);
+    Main.connection.register_get_handler('post', Main.connection.create_sender(Main.connection.send_post, this.on_get_post));
+    Main.connection.register_get_handler('full_post', Main.connection.create_sender(Main.connection.send_post, this.on_get_full_post));
+    Main.connection.register_remove_handler('post', this.on_remove);
   }
 
   public function get_post( id : Tid, full : Bool = true ) : beartek.agora.types.Post {
-    if( id.get().type.getName() != Items_types.Post_item.getName() ) throw 'Invalid Post id';
+    if( id.get().type.getName() != Items_types.Post_item.getName() ) throw {type: 6, msg: 'Invalid post id'};
     var post : beartek.agora.types.Post = this.obtain_post(id);
+    if(post == null) throw {type: 10, msg: 'Post doesnt exists'};
 
     if( full ) {
       post.info.id = id.get();
-      //TODO: reget author info.
       return post;
     } else {
       post.info = null;
@@ -43,7 +45,10 @@ import htmlparser.HtmlDocument;
   }
 
   public inline function to_post_info( info : models.PostsInfo ) : beartek.agora.types.Post_info {
-    return {id: Tid.fromString(info.id).get(), title: info.title, subtitle: info.subtitle, overview: info.overview, publish_date: info.publish_date}; //TODO: anadir datos del autor
+    return {id: Tid.fromString(info.id).get(),
+            title: info.title, subtitle: info.subtitle,
+            overview: info.overview, publish_date: info.publish_date,
+            author: Main.handlers.user.get_user(Tid.fromString(info.author_id)).get()};
   }
 
   private inline function obtain_post( id : Tid ) : beartek.agora.types.Post {
@@ -63,7 +68,7 @@ import htmlparser.HtmlDocument;
 
   public function get_random( n = 10 ) : Array<beartek.agora.types.Post_info> {
     var result : Array<beartek.agora.types.Post_info> = [];
-    var posts : Array<models.PostsInfo> = posts_info.where('id', 'LIKE', '%' + generate_char() + '%').orderAsc('id').findMany(n);
+    var posts : Array<models.PostsInfo> = posts_info.where('id', 'LIKE', '%' + Utils.generate_chars() + '%').orderAsc('id').findMany(n);
     if( posts.length < 1 ) {
       return get_random(n);
     }
@@ -82,7 +87,7 @@ import htmlparser.HtmlDocument;
   }
 
   public function create_post( post : Tpost, author : Tid ) : Tid {
-    if(author.get().type.getName() != Items_types.User_item.getName()) throw 'Author is not a valid id';
+    if(author.get().type.getName() != Items_types.User_item.getName()) throw {type: 6, msg: 'Invalid author id'};
     if(post.is_draft() == false ) this.edit_post(post, author);
 
     var post_id : Tid = generate_id(author.get());
@@ -93,20 +98,32 @@ import htmlparser.HtmlDocument;
   }
 
   private function generate_id( author : Id ) : Tid {
-    return new Tid({ host: author.host, type: Items_types.Post_item, first: author.first, second: generate_char() + generate_char(), third: generate_char() + generate_char()});
-  }
-
-  public inline function generate_char() : String {
-    return String.fromCharCode(Math.round(Math.random() * 79 + 48));
+    var id = Tid.generate_id(author.host, Post_item, author.first);
+    if( posts_info.get(id.toString()) == null ) {
+      return id;
+    } else {
+      return generate_id(author);
+    }
   }
 
   public function edit_post( post : Tpost, author : Tid ) : Void {
     if(post.is_draft()) this.create_post(post, author);
-    if(post.is_full()) throw 'Invalid post: The post is a full post';
-    if(author.get().type.getName() != Items_types.User_item.getName()) throw 'Author is not a valid id';
-    if(Tid.equal(author.get(), post.get().info.author.id)) throw 'Authors are differents';
+    if(post.is_full()) throw {type: 12, msg: 'The post is a full post'};
+    if(author.get().type.getName() != Items_types.User_item.getName()) throw {type: 6, msg: 'Invalid author id'};
+    if(Tid.equal(author.get(), post.get().info.author.id)) throw {type: 7, msg: 'Authors are differents'};
 
     save_edit_post(post, author, new Tid(post.get().info.id));
+  }
+
+  public function remove_post( id : Tid ) : Bool {
+    try {
+      posts_info.delete(id.toString());
+      posts_info.delete(id.toString());
+    } catch(e:Dynamic) {
+      trace('Error deleting post: ' + e, 'error');
+      return false;
+    }
+    return true;
   }
 
   private function save_post( post : Tpost, author_id : Tid, id : Tid ) : Void {
@@ -130,12 +147,12 @@ import htmlparser.HtmlDocument;
     db_info.save();
   }
 
-  private function on_get_post( id : Int, conn_id : String, post_id : Id ) : Void {
-    Main.connection.send_post(new Tpost(this.get_post(new Tid(post_id), false)), id, conn_id);
+  private function on_get_post( post_id : Id ) : Tpost {
+   return new Tpost(this.get_post(new Tid(post_id), false));
   }
 
-  private function on_get_full_post( id : Int, conn_id : String, post_id : Id ) : Void {
-    Main.connection.send_post(new Tpost(this.get_post(new Tid(post_id))), id, conn_id);
+  private function on_get_full_post( post_id : Id ) : Tpost {
+    return new Tpost(this.get_post(new Tid(post_id)));
   }
 
   private function on_post( id : Int, conn_id : String, post : beartek.agora.types.Post ) : Void {
@@ -150,6 +167,10 @@ import htmlparser.HtmlDocument;
     var author : Tid = Main.handlers.sessions.sessions[id];
 
     this.edit_post(post, author);
+  }
+
+  private function on_remove( id : Int, conn_id : String, post_id : Id ) : Void {
+    Main.connection.send_post_removed(this.remove_post(new Tid(post_id)), id, conn_id);
   }
 
 }

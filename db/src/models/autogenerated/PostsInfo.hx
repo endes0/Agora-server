@@ -50,6 +50,7 @@ class PostsInfo
 				+', `total_popularity` = ' + db.quote(total_popularity)
 				+', `last_access` = ' + db.quote(last_access)
 			+' WHERE `id` = ' + db.quote(id)
+			+' LIMIT 1'
 		);
 	}
 }

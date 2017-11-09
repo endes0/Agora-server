@@ -7,6 +7,7 @@ import beartek.agora.types.Tid;
 
 @:keep class Search {
   var posts_info : models.PostsInfoManager = Main.db.postsInfo;
+  var users_info : models.UsersInfoManager = Main.db.usersInfo;
 
   public function new() {
     Main.connection.register_get_handler('search', this.on_search);
@@ -16,40 +17,56 @@ import beartek.agora.types.Tid;
     return {posts: Main.handlers.post.get_random(100), sentences: [], users: []};
   }
 
-  public function get_posts( search : beartek.agora.types.Types.Search ) : Array<Post_info> {
+  private function generate_query( text_rows : Array<String>, order_rows : Array<String>, search : beartek.agora.types.Types.Search ) : String {
     var where : Array<String> = [];
     var other : String = '';
 
     if( search.contain != null ) {
       var contain : String = Main.db_conn.quote('%' + search.contain + '%');
-      where.push( 'title LIKE ' + contain + ' OR subtitle LIKE ' + contain + ' OR overview LIKE ' + contain );
+      var conditions : Array<String> = [];
+      for( row in text_rows ) {
+        conditions.push(row + ' LIKE ' + contain);
+      }
+
+      where.push( conditions.join(' OR ') );
     }
     if( search.dont_contain != null ) {
       var contain : String = Main.db_conn.quote('%' + search.dont_contain + '%');
-      where.push( 'NOT title LIKE ' + contain + ' AND NOT subtitle LIKE ' + contain + ' AND NOT overview LIKE ' + contain );
+      var conditions : Array<String> = [];
+      for( row in text_rows ) {
+        conditions.push('NOT' + row + ' LIKE ' + contain);
+      }
+
+      where.push( conditions.join(' AND ') );
     }
     if( search.starts_with != null ) {
       var start : String =  Main.db_conn.quote(search.starts_with + '%');
-      where.push( 'title LIKE ' + start + ' OR subtitle LIKE ' + start + ' OR overview LIKE ' + start );
+      var conditions : Array<String> = [];
+      for( row in text_rows ) {
+        conditions.push(row + ' LIKE ' + start);
+      }
+
+      where.push( conditions.join(' OR ') );
     }
     //TODO: event, topic, tags
 
     if( search.order_by != null ) {
+      //TODO: anadir casos especiales para el tipo de item;
       switch search.order_by {
       case Recent_date:
-        other += 'ORDER BY publish_date DESC ';
+        other += 'ORDER BY ' + order_rows[0] + ' DESC ';
       case Older_date:
-        other += 'ORDER BY publish_date ASC ';
+        other += 'ORDER BY ' + order_rows[0] + ' ASC ';
       case Most_popular_over_time:
-        other += 'ORDER BY total_popularity DESC ';
+        other += 'ORDER BY ' + order_rows[1] + ' DESC ';
       case Least_popular_over_time:
-        other += 'ORDER BY total_popularity ASC ';
+        other += 'ORDER BY ' + order_rows[1] + ' ASC ';
       case Most_popular:
         where.push('last_access > ' + datetime.DateTime.now().snap(Day(Down)).getTime());
-        other += 'ORDER BY day_popularity DESC ';
+        other += 'ORDER BY ' + order_rows[2] + ' DESC ';
       case Least_popular:
         where.push('last_access > ' + datetime.DateTime.now().snap(Day(Down)).getTime());
-        other += 'ORDER BY day_popularity ASC ';
+        other += 'ORDER BY ' + order_rows[2] + ' ASC ';
       case _:
         throw 'Not yet implemented';
       }
@@ -63,14 +80,28 @@ import beartek.agora.types.Tid;
       other += 'OFFSET ' + search.offset;
     }
 
-    return posts_info.getBySqlMany('SELECT * FROM posts_info' + (if(where.length > 0) ' WHERE ' + where.join(' AND ') else ' ') + ' ' + other).map(Main.handlers.post.to_post_info);
+    return (if(where.length > 0) ' WHERE ' + where.join(' AND ') else ' ') + ' ' + other;
+  }
+
+  public inline function get_posts( search : beartek.agora.types.Types.Search ) : Array<Post_info> {
+    return posts_info.getBySqlMany('SELECT * FROM posts_info' + generate_query(['title', 'subtitle', 'overview'], ['publish_date', 'total_popularity', 'day_popularity'], search) ).map(Main.handlers.post.to_post_info);
+  }
+
+  public inline function get_users( search : beartek.agora.types.Types.Search ) : Array<User_info> {
+    return users_info.getBySqlMany('SELECT * FROM users_info' + generate_query(['username', 'join_date', 'first_name'], ['last_login', 'username', 'first_name'], search)).map(Main.handlers.user.to_user_info);
   }
 
   private function on_search( id : Int, conn_id : String, search : beartek.agora.types.Types.Search ) : Void {
     if( search == null ) {
       Main.connection.send_search_result(this.random_result(), id, conn_id);
     } else {
-      Main.connection.send_search_result({posts: this.get_posts(search), sentences: [], users: []}, id, conn_id);
+      if( search.type == null ) {
+        Main.connection.send_search_result({posts: this.get_posts(search), sentences: [], users: this.get_users(search)}, id, conn_id);
+      } else {
+        Main.connection.send_search_result({posts: if(search.type.indexOf(Post_item) != -1) this.get_posts(search) else [],
+                                            sentences: if(search.type.indexOf(Post_item) != -1) [] else [],
+                                            users: if(search.type.indexOf(Post_item) != -1) this.get_users(search) else []}, id, conn_id);
+      }
     }
 
 

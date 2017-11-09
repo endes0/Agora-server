@@ -12,9 +12,10 @@ import orm.Db;
 typedef Handlers = {
   var token : Token;
   var sessions : Sessions;
-  var commands : Commands;
+  var user : User;
   var post : Post;
   var search : Search;
+  var commands : Commands;
 }
 
 class Main {
@@ -41,19 +42,19 @@ class Main {
   }
 
   public static function start() : Void {
-    var secure : {CA: String, Certificate: String} = null;
-    if( config['secure']['CA'] != null && config['secure']['certificate'] != null ) {
-      var secure : {CA: String, Certificate: String} = {CA: config['secure']['CA'], Certificate: config['secure']['certificate']};
+    var secure : {CA: String, Certificate: String, Key: String} = null;
+    if( config['secure']['CA'] != null && config['secure']['key'] != null && config['secure']['certificate'] != null ) {
+      secure = {CA: config['secure']['CA'], Certificate: config['secure']['certificate'], Key: config['secure']['key']};
       trace( 'Opening secure connection', 'info' );
     } else {
       trace( 'Opening insecure connection', 'warn' );
     }
 
-    connection = new Protocol(config['connection']['host'], Std.parseInt(config['connection']['port']), Std.parseInt(config['connection']['max_clients']), if(secure != null) secure else null, true);
+    connection = new Protocol(config['connection']['host'], Std.parseInt(config['connection']['port']), Std.parseInt(config['connection']['max_clients']), secure, true);
     db_conn = new Db(config['db']['URI']);
     db = new models.Orm(db_conn);
 
-    handlers = {token: new Token(), sessions: new Sessions(), commands: new Commands(), post: new Post(), search: new Search()};
+    handlers = {token: new Token(), sessions: new Sessions(), user: new User(), post: new Post(), search: new Search(), commands: new Commands()};
   }
 
   public static function off() : Void {

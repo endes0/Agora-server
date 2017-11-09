@@ -8,6 +8,7 @@ import beartek.agora.types.Protocol_types;
 import beartek.agora.types.Types;
 import beartek.agora.types.Tpost;
 import beartek.agora.types.Tid;
+import beartek.agora.types.Tuser_info;
 import beartek.agora.types.Tsentence;
 
 
@@ -19,7 +20,7 @@ class Protocol extends Wtps {
   var join_handlers : Array<Int -> Void> = new Array();
   var left_handlers : Array<Int -> Void> = new Array();
 
-  public function new(host : String, port: Int = 8080, max: Int = 100, ?secure_path : {CA: String, Certificate: String}, debug : Bool = true) {
+  public function new(host : String, port: Int = 8080, max: Int = 100, ?secure_path : {CA: String, Certificate: String, Key: String}, debug : Bool = true) {
     super(host, port, max, secure_path, debug);
   }
 
@@ -37,58 +38,38 @@ class Protocol extends Wtps {
 
   override public function on_pet( client_id : Int, pet : {id: String, type: Pet_types, data: Dynamic} ) : Void {
     switch pet.type {
-    case Get(d): this.process_get(client_id, pet.id, d, pet.data);
-    case Create(d): this.process_create(client_id, pet.id, d, pet.data);
-    case Remove(d): this.process_remove(client_id, pet.id, d, pet.data);
+    case Get(d): this.process(get_handlers, client_id, pet.id, d, pet.data);
+    case Create(d): this.process(create_handlers, client_id, pet.id, d, pet.data);
+    case Remove(d): this.process(remove_handlers, client_id, pet.id, d, pet.data);
     }
   }
 
-  private function process_get(client_id : Int, pet_id : String, type : String, data: Dynamic) : Void {
-    if( get_handlers[type] != null ) {
-      for( func in get_handlers[type] ) {
-        try {
-          func(client_id, pet_id, data);
-        } catch(e:Dynamic) {
-          trace('Error executing get handler for ' + pet_id + ': ' + e, 'error');
-          trace( haxe.CallStack.toString(haxe.CallStack.exceptionStack()), 'error' );
-        }
+  private function process(handlers : Map<String,Array<Int -> String -> Dynamic -> Void>>, client_id : Int, pet_id : String, type : String, data: Dynamic) : Void {
+    if( handlers[type] != null ) {
+      for( func in handlers[type] ) {
+        this.execute_handler(func, client_id, pet_id, type, data);
       }
     } else {
-      trace( 'No handlers to process msg' );
+      trace( 'No handlers to process msg', 'error' );
+      Main.connection.send_error({type: 4, msg: 'Unknow msg type'}, client_id, pet_id);
     }
   }
 
-  private function process_create(client_id : Int, pet_id : String, type : String, data: Dynamic) : Void {
-    if( create_handlers[type] != null ) {
-      for( func in create_handlers[type] ) {
-        try {
-          func(client_id, pet_id, data);
-        } catch(e:Dynamic) {
-          trace('Error executing create handler for ' + pet_id + ': ' + e, 'error');
-          trace( haxe.CallStack.toString(haxe.CallStack.exceptionStack()), 'error' );
-        }
+  private function execute_handler( ?func: Int -> String -> Dynamic -> Void, client_id : Int, pet_id : String, type : String, ?data: Dynamic ) : Void {
+    try {
+      func(client_id, pet_id, data);
+    } catch(e:Dynamic) {
+      trace('Error executing handler for ' + pet_id + ' of type ' + type + ': ' + e, 'error');
+      trace( haxe.CallStack.toString(haxe.CallStack.exceptionStack()), 'error' );
+      if( Std.is(e.type, Int) ) {
+        Main.connection.send_error(e, client_id, pet_id);
+      } else {
+        Main.connection.send_error({type: 0, msg: 'Unknow error'}, client_id, pet_id);
       }
-    } else {
-      trace( 'No handlers to process msg' );
     }
   }
 
-  private function process_remove(client_id : Int, pet_id : String, type : String, data: Dynamic) : Void {
-    if( remove_handlers[type] != null ) {
-      for( func in remove_handlers[type] ) {
-        try {
-          func(client_id, pet_id, data);
-        } catch(e:Dynamic) {
-          trace('Error executing create handler for ' + pet_id + ': ' + e, 'error');
-          trace( haxe.CallStack.toString(haxe.CallStack.exceptionStack()), 'error' );
-        }
-      }
-    } else {
-      trace( 'No handlers to process msg' );
-    }
-  }
-
-  public inline function register_get_handler( for_type : String, func: Int -> String -> Dynamic -> Void ) : Void {
+  public inline function register_get_handler( for_type : String, ?func: Int -> String -> Dynamic -> Void ) : Void {
     if(get_handlers[for_type] != null) get_handlers[for_type].push(func) else get_handlers[for_type] = [func];
   }
 
@@ -106,6 +87,12 @@ class Protocol extends Wtps {
 
   public inline function register_left_handler( func: Int -> Void ) : Void {
     left_handlers.push(func);
+  }
+
+  public function create_sender( send_func : Dynamic -> Int -> String -> Void, handler : Dynamic -> Dynamic ) : Int -> String -> Dynamic -> Void {
+    return function ( client : Int, conn : String, data : Dynamic ) : Void {
+      send_func(handler(data), client, conn);
+    }
   }
 
   public inline function send_privkey( privkey : haxe.io.ArrayBufferView, client : Int, ?conn : String ) : Void {
@@ -150,5 +137,14 @@ class Protocol extends Wtps {
 
   public inline function send_search_result( result : Search_results, client : Int, ?conn : String ) : Void {
     this.send_response(client, 'search_result', result, conn);
+  }
+
+
+  public inline function send_user_info( user : Tuser_info, client : Int, ?conn : String ) : Void {
+    this.send_response(client, 'user_info', user, conn);
+  }
+
+  public inline function send_error( error: Error, client : Int, ?conn : String ) : Void {
+    this.send_response(client, 'error', error, conn);
   }
 }
