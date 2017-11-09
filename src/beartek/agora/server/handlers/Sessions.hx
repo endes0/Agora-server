@@ -34,7 +34,7 @@ import datetime.DateTime;
       table.create(haxe.Serializer.run(privkey.view), '', login.user_id, DateTime.now().toString());
       return privkey.view;
     } else {
-      trace( 'Invalid loginkey' );
+      throw {type: 11, msg: 'Invalid loginkey'};
       return null;
     }
   }
@@ -68,6 +68,17 @@ import datetime.DateTime;
 
   private function update_last_use( privkey : haxe.io.Int32Array ) : Void {
     table.where('privkey', '=', haxe.Serializer.run(privkey)).update([ 'last_use' => DateTime.now().toString() ]);
+  }
+
+  public function create_loginkey( user : Tid, loginkey: haxe.Int64 ) : Void {
+    login.delete(haxe.Serializer.run(loginkey));
+    login.create(haxe.Serializer.run(loginkey), user.toString());
+  }
+
+  public function update_loginkey( user : Tid, loginkey: haxe.Int64 ) : Void {
+    var loginkey = login.where('user_id', '=', user.toString()).findOne();
+    loginkey.key = haxe.Serializer.run(loginkey);
+    loginkey.save();
   }
 
   public function generate_loginkey( username : String, password : String ) : haxe.Int64 {
