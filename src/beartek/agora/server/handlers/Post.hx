@@ -26,7 +26,6 @@ import htmlparser.HtmlDocument;
     if(post == null) throw {type: 10, msg: 'Post doesnt exists'};
 
     if( full ) {
-      post.info.id = id.get();
       return post;
     } else {
       post.info = null;
@@ -36,6 +35,7 @@ import htmlparser.HtmlDocument;
 
   public function get_post_info( id : Tid, popularity : Bool = false ) : beartek.agora.types.Post_info {
     var info = posts_info.get(id.toString());
+    if(info.id == '') throw {type: 10, msg: 'Post doesnt exist'};
 
     if( popularity ) {
       this.add_popularity(info, 1);
@@ -88,13 +88,16 @@ import htmlparser.HtmlDocument;
 
   public function create_post( post : Tpost, author : Tid ) : Tid {
     if(author.get().type.getName() != Items_types.User_item.getName()) throw {type: 6, msg: 'Invalid author id'};
-    if(post.is_draft() == false ) this.edit_post(post, author);
+    if (post.is_draft() == false) {
+       this.edit_post(post, author);
+       return new Tid(post.get().info.id);
+    } else {
+      var post_id : Tid = generate_id(author.get());
 
-    var post_id : Tid = generate_id(author.get());
-
-    save_post(post, author, post_id);
-    trace( 'Post created' );
-    return post_id;
+      save_post(post, author, post_id);
+      trace( 'Post created', 'sucess' );
+      return post_id;
+    }
   }
 
   private function generate_id( author : Id ) : Tid {
@@ -107,22 +110,21 @@ import htmlparser.HtmlDocument;
   }
 
   public function edit_post( post : Tpost, author : Tid ) : Void {
-    if(post.is_draft()) this.create_post(post, author);
-    if(post.is_full()) throw {type: 12, msg: 'The post is a full post'};
-    if(author.get().type.getName() != Items_types.User_item.getName()) throw {type: 6, msg: 'Invalid author id'};
-    if(Tid.equal(author.get(), post.get().info.author.id)) throw {type: 7, msg: 'Authors are differents'};
+    if (post.is_draft()) {
+      this.create_post(post, author);
+    } else {
+      if(post.is_full()) throw {type: 12, msg: 'The post is a full post'};
+      if(author.get().type.getName() != Items_types.User_item.getName()) throw {type: 6, msg: 'Invalid author id'};
+      if(Tid.equal(author.get(), post.get().info.author.id)) throw {type: 7, msg: 'Authors are differents'};
 
-    save_edit_post(post, author, new Tid(post.get().info.id));
+      save_edit_post(post, author, new Tid(post.get().info.id));
+    }
   }
 
+  //TODO: remover bool
   public function remove_post( id : Tid ) : Bool {
-    try {
-      posts_info.delete(id.toString());
-      posts_info.delete(id.toString());
-    } catch(e:Dynamic) {
-      trace('Error deleting post: ' + e, 'error');
-      return false;
-    }
+    posts.delete(id.toString());
+    posts_info.delete(id.toString());
     return true;
   }
 
@@ -167,10 +169,16 @@ import htmlparser.HtmlDocument;
     var author : Tid = Main.handlers.sessions.sessions[id];
 
     this.edit_post(post, author);
+    Main.connection.send_post_id(new Tid(post.get().info.id), id, conn_id);
   }
 
   private function on_remove( id : Int, conn_id : String, post_id : Id ) : Void {
-    Main.connection.send_post_removed(this.remove_post(new Tid(post_id)), id, conn_id);
+    if( Tid.equal(Main.handlers.sessions.sessions[id].get(), this.get_post_info(new Tid(post_id)).author.id) ) {
+      this.remove_post(new Tid(post_id));
+      Main.connection.send_post_removed(true, id, conn_id);
+    } else {
+      Main.connection.send_post_removed(false, id, conn_id);
+    }
   }
 
 }
