@@ -35,7 +35,7 @@ import htmlparser.HtmlDocument;
 
   public function get_post_info( id : Tid, popularity : Bool = false ) : beartek.agora.types.Post_info {
     var info = posts_info.get(id.toString());
-    if(info.id == '') throw {type: 10, msg: 'Post doesnt exist'};
+    if(info == null || info.id == '') throw {type: 10, msg: 'Post doesnt exist'};
 
     if( popularity ) {
       this.add_popularity(info, 1);

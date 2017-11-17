@@ -14,6 +14,7 @@ typedef Handlers = {
   var sessions : Sessions;
   var user : User;
   var post : Post;
+  var sentence : Sentence;
   var search : Search;
   var commands : Commands;
 }
@@ -54,7 +55,7 @@ class Main {
     db_conn = new Db(config['db']['URI']);
     db = new models.Orm(db_conn);
 
-    handlers = {token: new Token(), sessions: new Sessions(), user: new User(), post: new Post(), search: new Search(), commands: new Commands()};
+    handlers = {token: new Token(), sessions: new Sessions(), user: new User(), post: new Post(), sentence: new Sentence(), search: new Search(), commands: new Commands()};
   }
 
   public static function off() : Void {

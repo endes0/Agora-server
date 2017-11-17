@@ -39,6 +39,8 @@ import datetime.DateTime;
                     });
   }
 
+  //TODO: get random
+
   public function create_user( username : String, first_name : String, second_name : String, loginkey : haxe.Int64 ) : Tid {
     var id : Tid = generate_id();
     var info : Tuser_info = new Tuser_info({id: id.get(),

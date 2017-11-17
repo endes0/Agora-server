@@ -4,17 +4,20 @@ package beartek.agora.server.handlers;
 
 import beartek.agora.types.Types;
 import beartek.agora.types.Tid;
+import beartek.agora.types.Tsentence;
 
 @:keep class Search {
   var posts_info : models.PostsInfoManager = Main.db.postsInfo;
   var users_info : models.UsersInfoManager = Main.db.usersInfo;
+  var sentences : models.SentencesManager = Main.db.sentences;
+
 
   public function new() {
     Main.connection.register_get_handler('search', this.on_search);
   }
 
   public function random_result() : Search_results {
-    return {posts: Main.handlers.post.get_random(100), sentences: [], users: []};
+    return {posts: Main.handlers.post.get_random(100), sentences: Main.handlers.sentence.get_random(100), users: []};
   }
 
   private function generate_query( text_rows : Array<String>, order_rows : Array<String>, search : beartek.agora.types.Types.Search ) : String {
@@ -87,6 +90,12 @@ import beartek.agora.types.Tid;
     return posts_info.getBySqlMany('SELECT * FROM posts_info' + generate_query(['title', 'subtitle', 'overview'], ['publish_date', 'total_popularity', 'day_popularity'], search) ).map(Main.handlers.post.to_post_info);
   }
 
+  public inline function get_sentences( search : beartek.agora.types.Types.Search ) : Array<Sentence> {
+    return sentences.getBySqlMany('SELECT * FROM sentences' + generate_query(['sentence'], ['publish_date', 'total_popularity', 'day_popularity'], search)).map( function( sent : models.Sentences ) : Sentence {
+      return Main.handlers.sentence.to_sentence(sent).get();
+    });
+  }
+
   public inline function get_users( search : beartek.agora.types.Types.Search ) : Array<User_info> {
     return users_info.getBySqlMany('SELECT * FROM users_info' + generate_query(['username', 'join_date', 'first_name'], ['last_login', 'username', 'first_name'], search)).map(Main.handlers.user.to_user_info);
   }
@@ -96,11 +105,11 @@ import beartek.agora.types.Tid;
       Main.connection.send_search_result(this.random_result(), id, conn_id);
     } else {
       if( search.type == null ) {
-        Main.connection.send_search_result({posts: this.get_posts(search), sentences: [], users: this.get_users(search)}, id, conn_id);
+        Main.connection.send_search_result({posts: this.get_posts(search), sentences: this.get_sentences(search), users: this.get_users(search)}, id, conn_id);
       } else {
         Main.connection.send_search_result({posts: if(search.type.indexOf(Post_item) != -1) this.get_posts(search) else [],
-                                            sentences: if(search.type.indexOf(Post_item) != -1) [] else [],
-                                            users: if(search.type.indexOf(Post_item) != -1) this.get_users(search) else []}, id, conn_id);
+                                            sentences: if(search.type.indexOf(Sentence_item) != -1) this.get_sentences(search) else [],
+                                            users: if(search.type.indexOf(User_item) != -1) this.get_users(search) else []}, id, conn_id);
       }
     }
 

@@ -123,6 +123,10 @@ class Protocol extends Wtps {
     this.send_response(client, 'post_removed', removed, conn);
   }
 
+  public inline function send_sentence_id( id : Tid, client : Int, ?conn : String ) : Void {
+    this.send_response(client, 'sentence_id', id, conn);
+  }
+
   public inline function send_sentence( sentence : Tsentence, client : Int, ?conn : String ) : Void {
     if( sentence.is_draft() ) {
       throw 'Only complete sentence can be send to the client';
