@@ -19,7 +19,7 @@ import datetime.DateTime;
             username: info.username,
             first_name: info.first_name,
             second_name: info.second_name,
-            pinned_sentence: if(info.pinned_sentence != '') Tid.fromString(info.pinned_sentence).get() else null,
+            pinned_sentence: if(info.pinned_sentence != null) Tid.fromString(info.pinned_sentence).get() else null,
             image_src: info.image_src,
             join_date: datetime.DateTime.fromTime(info.join_date),
             last_login: datetime.DateTime.fromTime(info.last_login)};

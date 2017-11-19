@@ -20,7 +20,7 @@ import beartek.agora.types.Tsentence;
     return {posts: Main.handlers.post.get_random(100), sentences: Main.handlers.sentence.get_random(100), users: []};
   }
 
-  private function generate_query( text_rows : Array<String>, order_rows : Array<String>, search : beartek.agora.types.Types.Search ) : String {
+  private function generate_query( text_rows : Array<String>, order_rows : Array<String>, has_last_access : Bool = true , search : beartek.agora.types.Types.Search ) : String {
     var where : Array<String> = [];
     var other : String = '';
 
@@ -65,10 +65,10 @@ import beartek.agora.types.Tsentence;
       case Least_popular_over_time:
         other += 'ORDER BY ' + order_rows[1] + ' ASC ';
       case Most_popular:
-        where.push('last_access > ' + datetime.DateTime.now().snap(Day(Down)).getTime());
+        if(has_last_access) where.push('last_access > ' + datetime.DateTime.now().snap(Day(Down)).getTime());
         other += 'ORDER BY ' + order_rows[2] + ' DESC ';
       case Least_popular:
-        where.push('last_access > ' + datetime.DateTime.now().snap(Day(Down)).getTime());
+        if(has_last_access) where.push('last_access > ' + datetime.DateTime.now().snap(Day(Down)).getTime());
         other += 'ORDER BY ' + order_rows[2] + ' ASC ';
       case _:
         throw 'Not yet implemented';
@@ -97,7 +97,7 @@ import beartek.agora.types.Tsentence;
   }
 
   public inline function get_users( search : beartek.agora.types.Types.Search ) : Array<User_info> {
-    return users_info.getBySqlMany('SELECT * FROM users_info' + generate_query(['username', 'join_date', 'first_name'], ['last_login', 'username', 'first_name'], search)).map(Main.handlers.user.to_user_info);
+    return users_info.getBySqlMany('SELECT * FROM users_info' + generate_query(['username', 'join_date', 'first_name'], ['last_login', 'username', 'first_name'], false, search)).map(Main.handlers.user.to_user_info);
   }
 
   private function on_search( id : Int, conn_id : String, search : beartek.agora.types.Types.Search ) : Void {
@@ -112,8 +112,5 @@ import beartek.agora.types.Tsentence;
                                             users: if(search.type.indexOf(User_item) != -1) this.get_users(search) else []}, id, conn_id);
       }
     }
-
-
   }
-
 }
