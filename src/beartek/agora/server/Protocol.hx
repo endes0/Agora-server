@@ -47,7 +47,13 @@ class Protocol extends Wtps {
   private function process(handlers : Map<String,Array<Int -> String -> Dynamic -> Void>>, client_id : Int, pet_id : String, type : String, data: Dynamic) : Void {
     if( handlers[type] != null ) {
       for( func in handlers[type] ) {
+        #if debug
+        var stamp : Float = haxe.Timer.stamp();
         this.execute_handler(func, client_id, pet_id, type, data);
+        trace( 'Handler executed in '  + (haxe.Timer.stamp() - stamp)*1000 + ' ms', 'info');
+        #else
+        this.execute_handler(func, client_id, pet_id, type, data);
+        #end
       }
     } else {
       trace( 'No handlers to process msg', 'error' );
